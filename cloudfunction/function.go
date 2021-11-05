@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"time"
-        "os"
+	"os"
 	"github.com/tencentyun/scf-go-lib/cloudfunction/messages"
 	"github.com/tencentyun/scf-go-lib/functioncontext"
 )
@@ -44,6 +44,9 @@ func (fn *Function) Invoke(req *messages.InvokeRequest, response *messages.Invok
 		FunctionVersion:       req.FunctionVersion,
 		MemoryLimitInMb:       req.MemoryLimitInMb,
 		TimeLimitInMs:         req.TimeLimitInMs,
+		TencentcloudRegion:    req.TencentcloudRegion,
+		TencentcloudAppid:     req.TencentcloudAppid,
+		TencentcloudUin:       req.TencentcloudUin,
 	}
 
 	if len(req.ClientContext) > 0 {
@@ -53,14 +56,21 @@ func (fn *Function) Invoke(req *messages.InvokeRequest, response *messages.Invok
 		}
 	}
 
-        if len(req.Environment) > 0 {
+	if len(req.Environment) > 0 {
 		if err := json.Unmarshal([]byte(req.Environment), &lc.Environment); err != nil {
 			response.Error = functionErrorResponse(err)
 			return nil
 		}
-                for key, value := range lc.Environment {
-                    os.Setenv(key, value)
-                }
+		for key, value := range lc.Environment {
+			os.Setenv(key, value)
+		}
+	}
+
+	if len(req.FunctionTrace) > 0 {
+		if err := json.Unmarshal([]byte(req.FunctionTrace), &lc.FunctionTrace); err != nil {
+			response.Error = functionErrorResponse(err)
+			return nil
+		}
 	}
 
 	invokeContext = functioncontext.NewContext(invokeContext, lc)
